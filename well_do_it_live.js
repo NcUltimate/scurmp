@@ -195,7 +195,7 @@ SC = {
   _search_for(term) {
     return new Promise((resolve) => {
       if(this._is_current_search_id(term)) {
-        resolve(this.currentSearchResults);
+        return resolve(this.currentSearchResults);
       }
 
       this.currentSearchResults = this.$();
@@ -205,14 +205,14 @@ SC = {
       this.$('input.headerSearch__input').val(`${term}`);
       this.$('button.headerSearch__submit').click();
 
-      var currentSearchDigest = this._get_results_digest();
-      var searchIntervalID = setInterval(() => {
+      const currentSearchDigest = this._get_results_digest();
+      const searchIntervalID = setInterval(() => {
         newSearchDigest = this._get_results_digest();
 
         if(newSearchDigest !== '' && newSearchDigest !== currentSearchDigest) {
           this.currentSearchResults = this.$('.searchItem__trackItem');
           clearInterval(searchIntervalID);
-          resolve(this.currentSearchResults);
+          return resolve(this.currentSearchResults);
         }
       }, 250);
     });
@@ -236,9 +236,10 @@ SC = {
         } catch {
           jqueryLoaded = false;
         }
+
         if(jqueryLoaded) { 
           clearInterval(loadJQueryIntervalID);
-          resolve(jQuery)
+          return resolve(jQuery)
         };
       }, 50);
     });
