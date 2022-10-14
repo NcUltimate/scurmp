@@ -71,7 +71,7 @@ SC = {
     const nArtistName = this._sanitize(artistName);
     const nRemixArtist = this._sanitize(remixArtist);
     const isRemixAllowed = !!remixArtist;
-    const remixRegexp = new RegExp(`${nRemixArtist} (remix|mix|edit|bootleg|vip mix)`);
+    const remixRegexp = new RegExp(`${nRemixArtist}.+?(remix|mix|edit|bootleg|vip mix)`);
 
     let searchResults = await this.search(`${artistName} ${trackName} ${nRemixArtist}`);
 

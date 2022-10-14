@@ -63,10 +63,28 @@ class Library
   def initialize
     @raw_tracks = Spotify.client.me_tracks
     @tracks = @raw_tracks.dig('items').map do |item|
-      {
-        artists: item.dig('track', 'artists').map { |a| a['name'] },
-        name: item.dig('track', 'name'),
+      track_name = item.dig('track', 'name').downcase
+      pretty_track_name = track_name[/[^\(\-]+/].strip
+      artist_names = item.dig('track', 'artists').map { |a| a['name'].downcase }
+
+      base =  {
+        artists: artist_names,
+        name: pretty_track_name,
       }
+
+      possible_remix_artists = artist_names.each_with_object({}) do |artist_name, scan|
+        result = track_name.scan(/(#{artist_name}.+?(?:remix|bootleg|edit))/).flatten
+        scan[artist_name] = result if result.present?
+      end
+
+      if(possible_remix_artists.present?)
+        base.merge!({
+          is_remix: true,
+          remix_artist: possible_remix_artists.min_by { |artist_name, scan| scan.first.length }.first,
+        })
+      end
+
+      base
     end
   end
 end
