@@ -33,8 +33,20 @@ SC = {
     '2-Dutch',
   ],
   SPECIAL_CHAR_MAP: {
+    'ã': 'a', // e.g. pontos de exclamação
+    'ä': 'a', // e.g. john dahlbäck
+    'â': 'a', // e.g. françois-rené duchâble
+    'æ': 'ae', // e.g. mædi
+    'ç': 'c', // e.g. pontos de exclamação
     'ë': 'e', // e.g. Tiësto
-    'ø': 'o', // e.g. Mø
+    'é': 'e', // e.g. emelie cyréus, isabèl usher
+    'ē': 'e', // e.g. anamē
+    'í': 'i', // e.g. sofía reyes, oisín
+    'ø': 'o', // e.g. Mø, xylø, møme
+    'ö': 'o', // e.g. öwnboss, möwe
+    'ó': 'o', // e.g. jenő jandó
+    'ő': 'o', // e.g. jenő jandó
+    'ü': 'u', // e.g. gattüso
   },
   ARTIST_EXCEPTIONS: {
     'k.flay' : 'kflay',
@@ -47,7 +59,7 @@ SC = {
   },
   async search(term) {
     let $searchResultItems = await this._search_for(term);
-    return $searchResultItems.map((idx, result) => {
+    return $searchResultItems.map((_i, result) => {
       const $result = this.$(result);
 
       let title = $result.find('.soundTitle__title');
@@ -63,17 +75,18 @@ SC = {
         title: this._sanitize(title),
         user: this._sanitize(user),
         plays: parseInt(plays),
+        html: $result,
       };
     });
   },
-  async identify(trackName, artistName, {remixArtist} = {}) {
+  async identify(trackName, artistNames, {remixArtist} = {}) {
     const nTrackName = this._sanitize(trackName);
-    const nArtistName = this._sanitize(artistName);
+    const nArtistNames = artistNames.map(a => this._sanitize(a));
     const nRemixArtist = this._sanitize(remixArtist);
     const isRemixAllowed = !!remixArtist;
     const remixRegexp = new RegExp(`${nRemixArtist}.+?(remix|mix|edit|bootleg|vip mix)`);
 
-    let searchResults = await this.search(`${artistName} ${trackName} ${nRemixArtist}`);
+    let searchResults = await this.search(`${nArtistNames.join(' ')} ${trackName}`);
 
     // 1. Test for exact matches:
     //    - User is the artist, track title is the song title, contains a remix name if present
@@ -83,8 +96,8 @@ SC = {
       }
 
       let isExactArtist = (
-        result.user === nArtistName
-          || result.user === this.ARTIST_EXCEPTIONS[nArtistName]
+        nArtistNames.includes(result.user)
+          || nArtistNames.find(nArtistName => result.user === this.ARTIST_EXCEPTIONS[nArtistName])
           || isRemixAllowed && result.user === nRemixArtist
       );
 
@@ -107,10 +120,11 @@ SC = {
 
     // 2. Test for record label uploads
     //    - Artist and track name are the title, and the track was released by the label
+    const nArtistRegex = new RegExp(nArtistNames.join('|'));
     recordLabelMatches = searchResults.filter((_idx, result) => {
       let baseCriteria =(
         result.title.includes(nTrackName)
-          && result.title.includes(nArtistName)
+          && nArtistRegex.test(result.title)
           && this.RECORD_LABELS.includes(result.user)
       );
 
@@ -148,7 +162,7 @@ SC = {
 
       // At this point none of the tracks are by the artist or remix artist, so
       // are either of their names at least in the track title
-      if(!result.title.includes(nArtistName) || (isRemixAllowed && !result.title.includes(nRemixArtist))) {
+      if(!nArtistRegex.test(result.title) || (isRemixAllowed && !result.title.includes(nRemixArtist))) {
         return false;
       }
 
@@ -172,6 +186,71 @@ SC = {
     let closestResult = closestResults.sort((r1, r2) => r2.plays - r1.plays)[0];
     return Object.assign({}, closestResult, { type: 'closest' });
   },
+  async addToPlaylist(result) {
+    // Refuse to add empty results to a playlist.
+    if(result.type === 'no_match') {
+      return false;
+    }
+
+    // Pick "Transfer" playlist closest to the top with lowest track count (less than 500)
+    const $playlistOverlay = await this._open_playlist_modal(result.html);
+
+    // Make sure we're selecting a transfer playlist
+    const $transferPlaylists = $playlistOverlay.find('.addToPlaylistList__item').filter((_i, playlist) => {
+      const $title = this.$(playlist).find('a.addToPlaylistItem__titleLink');
+      return $title.attr('title').includes('Transfer')
+    });
+
+    // Make sure this track is not already in a transfer paylist
+    const $alreadyInPlaylists = $transferPlaylists.filter((_i, playlist) => {
+      const $addToPlaylistButton = this.$(playlist).find('button.addToPlaylistButton');
+      return $addToPlaylistButton.attr('title') === 'Remove';
+    });
+
+    if($alreadyInPlaylists.length > 0) {
+      $playlistOverlay.find('button.modal__closeButton').click();
+      return false;
+    }
+
+    // If this is not an "exact" or "label" match, add to our Approximate ("Closest") Transfers list
+    if(result.type === 'closest') {
+      const $transferListClosest = $transferPlaylists.filter((_i, playlist) => {
+        const $title = this.$(playlist).find('a.addToPlaylistItem__titleLink');
+        return $title.attr('title').includes('Closest');
+      });
+
+      let trackAdded = false;
+      if($transferListClosest.length > 0) {
+        $transferListClosest.eq(0).find('button.addToPlaylistButton').click();
+        trackAdded = true;
+      }
+
+      $playlistOverlay.find('button.modal__closeButton').click();
+      if(!trackAdded) {
+        alert('Please create a new playlist with "Transfer" and "Closest" in the name to continue.');
+      }
+      return trackAdded;
+    }
+    
+    // Find a transfer playlist with under 500 tracks
+    const $playlistsUnder500 = $transferPlaylists.filter((_i, playlist) => {
+      const trackCount = parseInt(this.$(playlist).find('.addToPlaylistItem__count').text().trim());
+      return trackCount >= 500;
+    });
+
+    // At least one playlist can accommodate this track. Add it and close the modal
+    if($playlistsUnder500.length > 0) {
+      const $playlist = $playlistsUnder500.eq(0);
+      $playlist.find('button.addToPlaylistButton').click();
+      $playlistOverlay.find('button.modal__closeButton').click();
+      return true;
+    }
+
+    // Otherwise, we need to make a new transfer paylist.
+    $playlistOverlay.find('button.modal__closeButton').click();
+    alert('Please create a new playlist with "Transfer" in the name to continue.');
+    return false;
+  },
   _sanitize(name) {
     if(!name) {
       return '';
@@ -184,6 +263,10 @@ SC = {
     return newName;
   },
   _get_results_digest() {
+    if(this.$('.searchList .searchList__empty')) {
+      return 'noresults';
+    }
+
     searchID = this.$('.searchItem .sc-link-primary');
     if(searchID.length === 0) {
       searchID = ''; 
@@ -198,9 +281,6 @@ SC = {
         return resolve(this.currentSearchResults);
       }
 
-      this.currentSearchResults = this.$();
-      this.currentSearchID = this._to_search_id(term);
-
       // perform search
       this.$('input.headerSearch__input').val(`${term}`);
       this.$('button.headerSearch__submit').click();
@@ -209,12 +289,28 @@ SC = {
       const searchIntervalID = setInterval(() => {
         newSearchDigest = this._get_results_digest();
 
-        if(newSearchDigest !== '' && newSearchDigest !== currentSearchDigest) {
-          this.currentSearchResults = this.$('.searchItem__trackItem');
+        if(!this.currentSearchID || (newSearchDigest !== '' && newSearchDigest !== currentSearchDigest)) {
+          this.currentSearchResults = this.$('.searchItem__trackItem.track');
+          this.currentSearchID = this._to_search_id(term);
           clearInterval(searchIntervalID);
           return resolve(this.currentSearchResults);
         }
       }, 250);
+    });
+  },
+  _open_playlist_modal($result) {
+    return new Promise((resolve) => {
+      // Click 'More' then 'Add to playlist'
+      $result.find('.sc-button-more').click();
+      this.$('body .dropdownMenu[id*="dropdown-button"] .sc-button-addtoset').click();
+
+      const waitIntervalID = setInterval(() => {
+        const $playlistModal = this.$('[id*=overlay].modal .modal__modal');
+        if($playlistModal.length > 0) {
+          clearInterval(waitIntervalID);
+          return resolve($playlistModal);
+        }
+      }, 100);
     });
   },
   _to_search_id(term) {

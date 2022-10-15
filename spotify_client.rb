@@ -56,13 +56,63 @@ module Spotify
       end
     end
   end
+
+  class Client
+    def me_tracks(params = {})
+      url = '/v1/me/tracks'
+      url += "?#{params.to_query}" if params.present?
+      run(:get, url, [200])
+    end
+  end
 end
 
 class Library
-  attr_reader :tracks
+  include Enumerable
+  
+  TOTAL_TRACKS = 2136
+  PAGE_SIZE = 50
+
+  attr_reader :tracks, :all_tracks, :limit, :offset
   def initialize
-    @raw_tracks = Spotify.client.me_tracks
-    @tracks = @raw_tracks.dig('items').map do |item|
+    @limit = PAGE_SIZE
+    @offset = 0
+    @all_tracks = []
+    next!
+  end
+
+  def next!
+    if has_next?
+      @raw_tracks = Spotify.client.me_tracks(
+        limit: @limit,
+        offset: @offset
+      )
+      @tracks = process_tracks
+      @all_tracks += @tracks
+      @offset += PAGE_SIZE
+    end
+    @tracks
+  end
+
+  # This takes about 45 seconds to iterate through. We need to throttle
+  # it or Spotify won't be happy.
+  def each(&block)
+    while has_next?
+      sleep 1
+      puts "Fetching offset=#{@offset} limit=#{@limit}"
+      next!
+    end
+
+    @all_tracks.each(&block)
+  end
+
+  def has_next?
+    @offset < TOTAL_TRACKS
+  end
+
+  private
+
+  def process_tracks
+    @raw_tracks.dig('items').map do |item|
       track_name = item.dig('track', 'name').downcase
       pretty_track_name = track_name[/[^\(\-]+/].strip
       artist_names = item.dig('track', 'artists').map { |a| a['name'].downcase }
