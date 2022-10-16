@@ -9,14 +9,18 @@ SC = {
     "Bass House Music",
     "Big Beat Records",
     "Bitbird",
+    "Bourne Recordings",
     "ChillYourMind",
     "Chill Planet",
+    "Chill Trap Records",
+    "CONFESSION",
     "DND RECS",
     "Dharma Worldwide",
     "Dim Mak Records",
     "Disciple ♛ ♜ ♞",
     "Enhanced",
     "Enhanced Progressive",
+    "Future Generation",
     "Future House Cloud",
     "Future House Music",
     "Futurized Records",
@@ -26,6 +30,7 @@ SC = {
     "HUB Records",
     "Heldeep Records",
     "House Call Records",
+    "Hysteria Records",
     "IN / ROTATION",
     "Insomniac Records",
     "Kernkraft Records",
@@ -33,11 +38,16 @@ SC = {
     "League of Legends",
     "Lowly.",
     "MA Music",
+    "Mau5trap",
+    "Mixmash Records",
     "Monstercat",
     "MrSuicideSheep",
     "Musical Freedom",
     "NCS",
+    "Night Bass",
     "NIGHTMODE",
+    "Night Service Only",
+    "Ones To Watch Records",
     "Pantheon Select",
     "Panther's Groove",
     "PARAMETRIC",
@@ -54,7 +64,9 @@ SC = {
     "Soave Tunes",
     "Spinnin' Deep",
     "Spinnin' Records",
+    "Spinnin' Talent Pool",
     "Strange Fruits",
+    "Subsidia",
     "Take It Easy Records",
     "TechniqueRecordings",
     "This Never Happened",
@@ -74,13 +86,18 @@ SC = {
     'ö': 'o', // e.g. öwnboss, möwe
     'ó': 'o', // e.g. jenő jandó
     'ő': 'o', // e.g. jenő jandó
+    '$': 's', // e.g. ty dolla $ign
     'ü': 'u', // e.g. gattüso
+    '’': "'", // sometimes these ticks appear instead of a single quote
+    '&': 'and', // e.g. years & years, raven & kreyn
+    'ℤ': 'z', //e.g. LℤRD
   },
   ARTIST_EXCEPTIONS: {
     'k.flay' : 'kflay',
     'dillon francis' : 'dillonfrancis',
     'eliminate' : 'eliminate*',
     'richard judge' : 'j.u.d.g.e.',
+    'dj shaan': 'shaan',
   },
   async init() {
     this.RECORD_LABELS = this.RECORD_LABELS.map(label => this._sanitize(label));
@@ -116,7 +133,7 @@ SC = {
     const nTrackName = this._sanitize(trackName);
     const nArtistNames = artistNames.map(a => this._sanitize(a));
 
-    const remixRegexp = new RegExp(`${nRemixArtist}.+?(remix|mix|edit|bootleg|vip mix)`);
+    const remixRegexp = new RegExp(`${this._sanitize_regex(nRemixArtist)}.+?(remix|mix|edit|bootleg|vip mix)`);
     const userRegexp = new RegExp('^(' + nArtistNames.map(name => this._sanitize_regex(name) + ' ?(official|music)?').join('|') + ')$');
 
     let searchNames = nArtistNames;
@@ -193,7 +210,7 @@ SC = {
       // Does the title at least include all parts of the searched track name
       let allTrackNamePartsIncluded = true;
       nTrackName.split(/\s+/).forEach(trackNamePart => {
-        const trackPartRegex = new RegExp(`\\b${trackNamePart}\\b`);
+        const trackPartRegex = new RegExp(`\\b${this._sanitize_regex(trackNamePart)}\\b`);
         allTrackNamePartsIncluded &&= trackPartRegex.test(result.title);
       });
 

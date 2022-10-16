@@ -1,7 +1,6 @@
 RUNNER = {
-  BOOKMARK: 316,
+  BOOKMARK: 600,
   MISSING: {},
-  CLOSE: {},
   LAST_SEARCHED_AT: new Date(),
 
   async init() {
@@ -11,12 +10,8 @@ RUNNER = {
       console.log('SC Initialized.');
     }
 
-    if(this.MISSING.length === 0 && NO_MATCH) {
+    if(!this?.MISSING?.length || (this.MISSING.length === 0 && NO_MATCH)) {
       this.MISSING = NO_MATCH;
-    }
-
-    if(this.CLOSE.length === 0 && CLOSE_MATCHES) {
-      this.CLOSE = CLOSE_MATCHES;
     }
   },
 
@@ -88,10 +83,6 @@ RUNNER = {
 
     if(result.type === 'no_match') {
       this.MISSING[trackNumber] = spotifyTrack;
-    }
-
-    if(result.type === 'closest') {
-      this.CLOSE[trackNumber] = spotifyTrack;
     }
 
     // console.log("ADDING TO PLAYLIST");
