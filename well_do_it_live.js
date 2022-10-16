@@ -33,6 +33,12 @@ SC = {
     '2-Dutch',
     'House Call Records',
     'Futurized Records',
+    'IN / ROTATION',
+    'DND RECS',
+    'Kernkraft Records',
+    'Soave Tunes',
+    'Soave',
+    'NIGHTMODE',
   ],
   SPECIAL_CHAR_MAP: {
     'ã': 'a', // e.g. pontos de exclamação

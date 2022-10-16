@@ -1,4 +1,6 @@
 RUNNER = {
+  BOOKMARK = 100,
+  
   waitForOverlayToClose() {
     return new Promise((resolve) => {
       const waitForOverlayToCloseID = setInterval(() => {
