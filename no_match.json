@@ -1,4 +1,11 @@
 {
+    "41": {
+        "artists": [
+            "melyjones",
+            "nevaleft"
+        ],
+        "name": "you & me"
+    },
     "52": {
         "artists": [
             "krister",
@@ -11,6 +18,14 @@
             "empra"
         ],
         "name": "heavy heart"
+    },
+    "111": {
+        "artists": [
+            "cupidon",
+            "kallitechnis",
+            "ric wilson"
+        ],
+        "name": "wake up, get down"
     },
     "114": {
         "artists": [
@@ -37,14 +52,6 @@
             "dr. fresch"
         ],
         "name": "joker"
-    },
-    "151": {
-        "artists": [
-            "nick havsen",
-            "mike miami",
-            "codex (se)"
-        ],
-        "name": "get money"
     },
     "158": {
         "artists": [
@@ -98,5 +105,63 @@
         "name": "この夢が醒めるまで",
         "is_remix": true,
         "remix_artist": "retrovision"
+    },
+    "217": {
+        "artists": [
+            "g-pol",
+            "vagan"
+        ],
+        "name": "pick up the phone"
+    },
+    "219": {
+        "artists": [
+            "dj matheus lazaretti",
+            "d'reis",
+            "blu"
+        ],
+        "name": "kingdom"
+    },
+    "222": {
+        "artists": [
+            "m!ke v"
+        ],
+        "name": "over my head"
+    },
+    "227": {
+        "artists": [
+            "don diablo",
+            "jlv",
+            "john k"
+        ],
+        "name": "problems"
+    },
+    "229": {
+        "artists": [
+            "aviella",
+            "snavs"
+        ],
+        "name": "like it how it is",
+        "is_remix": true,
+        "remix_artist": "snavs"
+    },
+    "233": {
+        "artists": [
+            "bart b more"
+        ],
+        "name": "never let it go"
+    },
+    "245": {
+        "artists": [
+            "phantoms",
+            "sarah close"
+        ],
+        "name": "moonlight"
+    },
+    "287": {
+        "artists": [
+            "kaskade",
+            "the moth & the flame"
+        ],
+        "name": "haunt me v.2"
     }
 }

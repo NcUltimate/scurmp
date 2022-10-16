@@ -68,7 +68,7 @@ end
 
 class Library
   include Enumerable
-  
+
   TOTAL_TRACKS = 2136
   PAGE_SIZE = 50
 
@@ -93,7 +93,7 @@ class Library
     @tracks
   end
 
-  # This takes about 45 seconds to iterate through. We need to throttle
+  # This takes about 1min 30secs to iterate through. We need to throttle
   # it or Spotify won't be happy.
   def each(&block)
     while has_next?

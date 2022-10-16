@@ -1,44 +1,64 @@
 SC = {
   RECORD_LABELS: [
-    'LYD',
-    'Insomniac Records',
-    'Simplify.',
-    'Selected.',
-    'Gemstone Records',
-    'Dharma Worldwide',
-    'Future House Cloud',
-    'Pantheon Select',
-    'Lowly.',
-    'Protocol Recordings',
-    'bitbird',
-    'S I Z E',
-    'NCS',
-    'MA Music',
-    'Proximity',
-    'SKINK',
-    'AFTR:HRS',
-    'Strange Fruits',
-    'Big Beat Records',
-    'Musical Freedom',
-    'MrSuicideSheep',
-    'Revealed Recordings',
-    'Bass House Music',
-    'Future House Music',
-    'Armada Music',
-    'Enhanced',
-    'HEXAGON',
-    'Anjunadeep',
+    "2-Dutch",
+    "AFTR:HRS",
+    "Anjunabeats",
+    "Anjunadeep",
+    "Armada Music",
+    "ATLAST",
+    "Bass House Music",
+    "Big Beat Records",
+    "Bitbird",
+    "ChillYourMind",
+    "Chill Planet",
+    "DND RECS",
+    "Dharma Worldwide",
+    "Dim Mak Records",
+    "Disciple ♛ ♜ ♞",
+    "Enhanced",
+    "Enhanced Progressive",
+    "Future House Cloud",
+    "Future House Music",
+    "Futurized Records",
+    "Gemstone Records",
+    "Heartfeldt Records",
+    "HEXAGON",
+    "HUB Records",
+    "Heldeep Records",
+    "House Call Records",
+    "IN / ROTATION",
+    "Insomniac Records",
+    "Kernkraft Records",
+    "LYD",
+    "League of Legends",
+    "Lowly.",
+    "MA Music",
+    "Monstercat",
+    "MrSuicideSheep",
+    "Musical Freedom",
+    "NCS",
+    "NIGHTMODE",
+    "Pantheon Select",
+    "Panther's Groove",
+    "PARAMETRIC",
+    "Protocol Recordings",
+    "Proximity",
+    "Revealed Recordings",
+    "S I Z E",
+    "SKINK",
+    "Seal Network",
+    "Selected.",
+    "Simplify.",
+    "Smash The House",
+    "Soave",
+    "Soave Tunes",
+    "Spinnin' Deep",
     "Spinnin' Records",
-    'Monstercat',
-    '2-Dutch',
-    'House Call Records',
-    'Futurized Records',
-    'IN / ROTATION',
-    'DND RECS',
-    'Kernkraft Records',
-    'Soave Tunes',
-    'Soave',
-    'NIGHTMODE',
+    "Strange Fruits",
+    "Take It Easy Records",
+    "TechniqueRecordings",
+    "This Never Happened",
+    "ZERO COOL",
   ],
   SPECIAL_CHAR_MAP: {
     'ã': 'a', // e.g. pontos de exclamação
@@ -59,6 +79,8 @@ SC = {
   ARTIST_EXCEPTIONS: {
     'k.flay' : 'kflay',
     'dillon francis' : 'dillonfrancis',
+    'eliminate' : 'eliminate*',
+    'richard judge' : 'j.u.d.g.e.',
   },
   async init() {
     this.RECORD_LABELS = this.RECORD_LABELS.map(label => this._sanitize(label));
@@ -68,7 +90,7 @@ SC = {
   },
   async search(term) {
     let $searchResultItems = await this._search_for(term);
-    return $searchResultItems.map((_i, result) => {
+    return $searchResultItems.map((index, result) => {
       const $result = this.$(result);
 
       let title = $result.find('.soundTitle__title');
@@ -84,16 +106,18 @@ SC = {
         title: this._sanitize(title),
         user: this._sanitize(user),
         plays: parseInt(plays),
-        html: $result,
+        index: index,
       };
     });
   },
   async identify(trackName, artistNames, {remixArtist} = {}) {
+    const isRemixAllowed = !!remixArtist;
+    const nRemixArtist = this._sanitize(remixArtist);
     const nTrackName = this._sanitize(trackName);
     const nArtistNames = artistNames.map(a => this._sanitize(a));
-    const nRemixArtist = this._sanitize(remixArtist);
-    const isRemixAllowed = !!remixArtist;
+
     const remixRegexp = new RegExp(`${nRemixArtist}.+?(remix|mix|edit|bootleg|vip mix)`);
+    const userRegexp = new RegExp('^(' + nArtistNames.map(name => this._sanitize_regex(name) + ' ?(official|music)?').join('|') + ')$');
 
     let searchNames = nArtistNames;
     if(remixArtist && !searchNames.includes(remixArtist)) {
@@ -103,14 +127,16 @@ SC = {
     let searchResults = await this.search(`${searchNames.join(' ')} ${trackName}`);
 
     // 1. Test for exact matches:
-    //    - User is the artist, track title is the song title, contains a remix name if present
+    //    - Track title contains the song title (allows for common endings like [OUT NOW], etc)
+    //    - User is one of the artists
+    //    - Track title contains a remix name if allowed
     exactMatches = searchResults.filter((_idx, result) => {
       if(!result.title.includes(nTrackName)) {
         return false;
       }
 
       let isExactArtist = (
-        nArtistNames.includes(result.user)
+        userRegexp.test(result.user)
           || nArtistNames.find(nArtistName => result.user === this.ARTIST_EXCEPTIONS[nArtistName])
           || isRemixAllowed && result.user === nRemixArtist
       );
@@ -134,11 +160,11 @@ SC = {
 
     // 2. Test for record label uploads
     //    - Artist and track name are the title, and the track was released by the label
-    const nArtistRegex = new RegExp(nArtistNames.join('|'));
+    const artistRegexp = new RegExp(nArtistNames.map(name => this._sanitize_regex(name)).join('|'));
     recordLabelMatches = searchResults.filter((_idx, result) => {
       let baseCriteria =(
         result.title.includes(nTrackName)
-          && nArtistRegex.test(result.title)
+          && artistRegexp.test(result.title)
           && this.RECORD_LABELS.includes(result.user)
       );
 
@@ -167,16 +193,17 @@ SC = {
       // Does the title at least include all parts of the searched track name
       let allTrackNamePartsIncluded = true;
       nTrackName.split(/\s+/).forEach(trackNamePart => {
-        allTrackNamePartsIncluded &&= result.title.includes(trackNamePart);
+        const trackPartRegex = new RegExp(`\\b${trackNamePart}\\b`);
+        allTrackNamePartsIncluded &&= trackPartRegex.test(result.title);
       });
 
       if(!allTrackNamePartsIncluded) {
         return false;
       }
 
-      // At this point none of the tracks are by the artist or remix artist, so
+      // At this point none of the uploaders match the artist or remix artist, so
       // are either of their names at least in the track title
-      if(!nArtistRegex.test(result.title) || (isRemixAllowed && !result.title.includes(nRemixArtist))) {
+      if(!artistRegexp.test(result.title) || (isRemixAllowed && !result.title.includes(nRemixArtist))) {
         return false;
       }
 
@@ -210,7 +237,7 @@ SC = {
     }
 
     // Pick "Transfer" playlist closest to the top with lowest track count (less than 500)
-    const $playlistOverlay = await this._open_playlist_modal(result.html);
+    const $playlistOverlay = await this._open_playlist_modal(result.index);
 
     // Make sure we're selecting a transfer playlist
     const $transferPlaylists = $playlistOverlay.find('.addToPlaylistList__item').filter((_i, playlist) => {
@@ -301,6 +328,9 @@ SC = {
     });
     return newName;
   },
+  _sanitize_regex(str) {
+    return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replaceAll(/[^\\\w]/g, '$&?')
+  },
   _get_results_digest() {
     searchID = this.$('.searchItem .sc-link-primary');
     if(searchID.length === 0) {
@@ -326,7 +356,11 @@ SC = {
       const searchIntervalID = setInterval(() => {
         maxTries--;
 
+        // console.log("DIGESTING");
+
         if(maxTries === 0) {
+
+          // console.log("HIT MAX TRIES");
           this.currentSearchResults = this.$();
           this.currentSearchID = this._to_search_id(term);
           clearInterval(searchIntervalID);
@@ -351,10 +385,10 @@ SC = {
       }, 250);
     });
   },
-  _open_playlist_modal($result) {
+  _open_playlist_modal(index) {
     return new Promise((resolve) => {
       // Click 'More' then 'Add to playlist'
-      $result.find('.sc-button-more').click();
+      this.$('.track.searchItem__trackItem').eq(index).find('.sc-button-more').click();
       this.$('body .dropdownMenu[id*="dropdown-button"] .sc-button-addtoset').click();
 
       const waitIntervalID = setInterval(() => {
