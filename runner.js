@@ -1,5 +1,5 @@
 RUNNER = {
-  BOOKMARK: 600,
+  BOOKMARK: 700,
   MISSING: {},
   LAST_SEARCHED_AT: new Date(),
 

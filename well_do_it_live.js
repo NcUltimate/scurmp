@@ -1,6 +1,7 @@
 SC = {
   RECORD_LABELS: [
     "2-Dutch",
+    "3BEAT",
     "AFTR:HRS",
     "Anjunabeats",
     "Anjunadeep",
@@ -18,6 +19,7 @@ SC = {
     "Dharma Worldwide",
     "Dim Mak Records",
     "Disciple ♛ ♜ ♞",
+    "EDM.com",
     "Enhanced",
     "Enhanced Progressive",
     "Future Generation",
@@ -30,6 +32,7 @@ SC = {
     "HUB Records",
     "Heldeep Records",
     "House Call Records",
+    "House Views.",
     "Hysteria Records",
     "IN / ROTATION",
     "Insomniac Records",
