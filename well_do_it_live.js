@@ -86,7 +86,12 @@ SC = {
     const isRemixAllowed = !!remixArtist;
     const remixRegexp = new RegExp(`${nRemixArtist}.+?(remix|mix|edit|bootleg|vip mix)`);
 
-    let searchResults = await this.search(`${nArtistNames.join(' ')} ${trackName}`);
+    let searchNames = nArtistNames;
+    if(remixArtist && !searchNames.includes(remixArtist)) {
+      searchNames.push(remixArtist);
+    }
+
+    let searchResults = await this.search(`${searchNames.join(' ')} ${trackName}`);
 
     // 1. Test for exact matches:
     //    - User is the artist, track title is the song title, contains a remix name if present
@@ -195,17 +200,27 @@ SC = {
     // Pick "Transfer" playlist closest to the top with lowest track count (less than 500)
     const $playlistOverlay = await this._open_playlist_modal(result.html);
 
+    // console.log({$playlistOverlay});
+
     // Make sure we're selecting a transfer playlist
     const $transferPlaylists = $playlistOverlay.find('.addToPlaylistList__item').filter((_i, playlist) => {
       const $title = this.$(playlist).find('a.addToPlaylistItem__titleLink');
-      return $title.attr('title').includes('Transfer')
+      const actualTitle = $title.attr('title');
+      // console.log({$title, actualTitle});
+      return actualTitle.includes('Transfer') && !actualTitle.includes('Closest');
     });
+
+
+    // console.log({$transferPlaylists});
 
     // Make sure this track is not already in a transfer paylist
     const $alreadyInPlaylists = $transferPlaylists.filter((_i, playlist) => {
       const $addToPlaylistButton = this.$(playlist).find('button.addToPlaylistButton');
+      // console.log({title: $addToPlaylistButton.attr('title'), $addToPlaylistButton});
       return $addToPlaylistButton.attr('title') === 'Remove';
     });
+
+    // console.log({$alreadyInPlaylists});
 
     if($alreadyInPlaylists.length > 0) {
       $playlistOverlay.find('button.modal__closeButton').click();
@@ -235,8 +250,11 @@ SC = {
     // Find a transfer playlist with under 500 tracks
     const $playlistsUnder500 = $transferPlaylists.filter((_i, playlist) => {
       const trackCount = parseInt(this.$(playlist).find('.addToPlaylistItem__count').text().trim());
-      return trackCount >= 500;
+      // console.log({trackCount});
+      return trackCount < 500;
     });
+
+    // console.log({$playlistsUnder500});
 
     // At least one playlist can accommodate this track. Add it and close the modal
     if($playlistsUnder500.length > 0) {
@@ -263,10 +281,6 @@ SC = {
     return newName;
   },
   _get_results_digest() {
-    if(this.$('.searchList .searchList__empty')) {
-      return 'noresults';
-    }
-
     searchID = this.$('.searchItem .sc-link-primary');
     if(searchID.length === 0) {
       searchID = ''; 
@@ -278,6 +292,7 @@ SC = {
   _search_for(term) {
     return new Promise((resolve) => {
       if(this._is_current_search_id(term)) {
+        // console.log('SAME SEARCH');
         return resolve(this.currentSearchResults);
       }
 
@@ -285,11 +300,28 @@ SC = {
       this.$('input.headerSearch__input').val(`${term}`);
       this.$('button.headerSearch__submit').click();
 
+      let maxTries = 16;
       const currentSearchDigest = this._get_results_digest();
       const searchIntervalID = setInterval(() => {
-        newSearchDigest = this._get_results_digest();
+        maxTries--;
 
-        if(!this.currentSearchID || (newSearchDigest !== '' && newSearchDigest !== currentSearchDigest)) {
+        if(maxTries === 0) {
+          this.currentSearchResults = this.$();
+          this.currentSearchID = this._to_search_id(term);
+          clearInterval(searchIntervalID);
+          return resolve(this.currentSearchResults);
+        }
+        
+        const newSearchDigest = this._get_results_digest();
+        if(newSearchDigest === '') {
+          return;
+        }
+
+        // console.log('DIGESTING');
+        // console.log({ID: this.currentSearchID, newSearchDigest, currentSearchDigest});
+
+        if(!this.currentSearchID || newSearchDigest !== currentSearchDigest) {
+          // console.log('DIGESTED');
           this.currentSearchResults = this.$('.searchItem__trackItem.track');
           this.currentSearchID = this._to_search_id(term);
           clearInterval(searchIntervalID);
@@ -307,8 +339,13 @@ SC = {
       const waitIntervalID = setInterval(() => {
         const $playlistModal = this.$('[id*=overlay].modal .modal__modal');
         if($playlistModal.length > 0) {
-          clearInterval(waitIntervalID);
-          return resolve($playlistModal);
+          const $playlistItemTitles = $playlistModal.find('.addToPlaylistList__item a.addToPlaylistItem__titleLink');
+          if($playlistItemTitles.length > 0) {
+            clearInterval(waitIntervalID);
+            setTimeout(() => {
+              return resolve($playlistModal);
+            }, 1000);
+          }
         }
       }, 100);
     });
