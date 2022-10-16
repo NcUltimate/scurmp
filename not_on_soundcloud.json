@@ -1,0 +1,102 @@
+{
+    "52": {
+        "artists": [
+            "krister",
+            "melyjones"
+        ],
+        "name": "universe"
+    },
+    "88": {
+        "artists": [
+            "empra"
+        ],
+        "name": "heavy heart"
+    },
+    "114": {
+        "artists": [
+            "lucas estrada",
+            "sevek"
+        ],
+        "name": "in the night",
+        "is_remix": true,
+        "remix_artist": "sevek"
+    },
+    "139": {
+        "artists": [
+            "rac",
+            "hotel garuda",
+            "louis the child"
+        ],
+        "name": "passion",
+        "is_remix": true,
+        "remix_artist": "hotel garuda"
+    },
+    "148": {
+        "artists": [
+            "kitone",
+            "dr. fresch"
+        ],
+        "name": "joker"
+    },
+    "151": {
+        "artists": [
+            "nick havsen",
+            "mike miami",
+            "codex (se)"
+        ],
+        "name": "get money"
+    },
+    "158": {
+        "artists": [
+            "vargenta",
+            "daniel mcmillan"
+        ],
+        "name": "shivers"
+    },
+    "160": {
+        "artists": [
+            "kx5",
+            "deadmau5",
+            "kaskade",
+            "hayla"
+        ],
+        "name": "escape"
+    },
+    "163": {
+        "artists": [
+            "plastik funk",
+            "sebastian mateo",
+            "dj st3v3"
+        ],
+        "name": "better than this"
+    },
+    "167": {
+        "artists": [
+            "ryos"
+        ],
+        "name": "two of us"
+    },
+    "168": {
+        "artists": [
+            "kaaze",
+            "millennial"
+        ],
+        "name": "erase you"
+    },
+    "179": {
+        "artists": [
+            "madism"
+        ],
+        "name": "all for you"
+    },
+    "183": {
+        "artists": [
+            "miliyah",
+            "retrovision",
+            "yoshida brothers"
+        ],
+        "name": "この夢が醒めるまで",
+        "is_remix": true,
+        "remix_artist": "retrovision"
+    }
+}
