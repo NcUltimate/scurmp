@@ -18,9 +18,8 @@ RUNNER = {
       console.log('SC Initialized.');
     }
 
+    let currentIndex = start;
     for(const spotifyTrack of LIBRARY.slice(start, end)) {
-      // console.log(spotifyTrack);
-      
       let result = {};
       if(spotifyTrack.is_remix) {
         result = await SC.identify(
@@ -35,19 +34,11 @@ RUNNER = {
         );
       }
 
-      console.log(result);
-      if(result.type === 'no_match') {
-        console.log('NO MATCH');
-        continue;
-      }
+      result.index = currentIndex++;
 
-      const success = await SC.addToPlaylist(result);
+      const playlistAddResult = await SC.addToPlaylist(result);
+      console.log(Object.assign({}, spotifyTrack, result, playlistAddResult));
       await this.waitForOverlayToClose();
-
-      if(!success) {
-        console.log("FAILED TO ADD TO PLAYLIST");
-        continue;
-      }
     }
   },
 }

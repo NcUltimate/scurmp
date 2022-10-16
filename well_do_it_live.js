@@ -31,6 +31,8 @@ SC = {
     "Spinnin' Records",
     'Monstercat',
     '2-Dutch',
+    'House Call Records',
+    'Futurized Records',
   ],
   SPECIAL_CHAR_MAP: {
     'ã': 'a', // e.g. pontos de exclamação
@@ -50,6 +52,7 @@ SC = {
   },
   ARTIST_EXCEPTIONS: {
     'k.flay' : 'kflay',
+    'dillon francis' : 'dillonfrancis',
   },
   async init() {
     this.RECORD_LABELS = this.RECORD_LABELS.map(label => this._sanitize(label));
@@ -194,37 +197,33 @@ SC = {
   async addToPlaylist(result) {
     // Refuse to add empty results to a playlist.
     if(result.type === 'no_match') {
-      return false;
+      return {
+        success: false,
+        reason: 'no_match',
+      };
     }
 
     // Pick "Transfer" playlist closest to the top with lowest track count (less than 500)
     const $playlistOverlay = await this._open_playlist_modal(result.html);
 
-    // console.log({$playlistOverlay});
-
     // Make sure we're selecting a transfer playlist
     const $transferPlaylists = $playlistOverlay.find('.addToPlaylistList__item').filter((_i, playlist) => {
       const $title = this.$(playlist).find('a.addToPlaylistItem__titleLink');
-      const actualTitle = $title.attr('title');
-      // console.log({$title, actualTitle});
-      return actualTitle.includes('Transfer') && !actualTitle.includes('Closest');
+      return $title.attr('title').includes('Transfer');
     });
-
-
-    // console.log({$transferPlaylists});
 
     // Make sure this track is not already in a transfer paylist
     const $alreadyInPlaylists = $transferPlaylists.filter((_i, playlist) => {
       const $addToPlaylistButton = this.$(playlist).find('button.addToPlaylistButton');
-      // console.log({title: $addToPlaylistButton.attr('title'), $addToPlaylistButton});
       return $addToPlaylistButton.attr('title') === 'Remove';
     });
 
-    // console.log({$alreadyInPlaylists});
-
     if($alreadyInPlaylists.length > 0) {
       $playlistOverlay.find('button.modal__closeButton').click();
-      return false;
+      return {
+        success: false,
+        reason: 'already_added',
+      };
     }
 
     // If this is not an "exact" or "label" match, add to our Approximate ("Closest") Transfers list
@@ -234,40 +233,56 @@ SC = {
         return $title.attr('title').includes('Closest');
       });
 
-      let trackAdded = false;
+      let result;
       if($transferListClosest.length > 0) {
         $transferListClosest.eq(0).find('button.addToPlaylistButton').click();
-        trackAdded = true;
+        result = { 
+          success: true,
+          reason: 'added_to_closest'
+        };
+      } else {
+        result = {
+          success: false,
+          reason: 'missing_closest_playlist',
+        };
       }
 
       $playlistOverlay.find('button.modal__closeButton').click();
-      if(!trackAdded) {
+      if(!result.success) {
         alert('Please create a new playlist with "Transfer" and "Closest" in the name to continue.');
       }
-      return trackAdded;
+      return result;
     }
+
+    const $specificPlaylists = $transferPlaylists.filter((_i, playlist) => {
+      const $title = this.$(playlist).find('a.addToPlaylistItem__titleLink');
+      return !$title.attr('title').includes('Closest');
+    });
     
-    // Find a transfer playlist with under 500 tracks
-    const $playlistsUnder500 = $transferPlaylists.filter((_i, playlist) => {
+    // Find a "non-closest" transfer playlist with under 500 tracks
+    const $playlistsUnder500 = $specificPlaylists.filter((_i, playlist) => {
       const trackCount = parseInt(this.$(playlist).find('.addToPlaylistItem__count').text().trim());
-      // console.log({trackCount});
       return trackCount < 500;
     });
-
-    // console.log({$playlistsUnder500});
 
     // At least one playlist can accommodate this track. Add it and close the modal
     if($playlistsUnder500.length > 0) {
       const $playlist = $playlistsUnder500.eq(0);
       $playlist.find('button.addToPlaylistButton').click();
       $playlistOverlay.find('button.modal__closeButton').click();
-      return true;
+      return { 
+        success: true,
+        reason: 'success'
+      };
     }
 
     // Otherwise, we need to make a new transfer paylist.
     $playlistOverlay.find('button.modal__closeButton').click();
     alert('Please create a new playlist with "Transfer" in the name to continue.');
-    return false;
+    return { 
+      success: false,
+      reason: 'missing_transfer_playlist'
+    };
   },
   _sanitize(name) {
     if(!name) {
