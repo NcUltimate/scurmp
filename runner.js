@@ -1,5 +1,5 @@
 RUNNER = {
-  BOOKMARK: 100,
+  BOOKMARK: 200,
   MISSING: {},
 
   async init() {
@@ -15,11 +15,14 @@ RUNNER = {
   },
 
   async run(start = this.BOOKMARK, end = LIBRARY.length) {
-    const shouldUpdateBookmark = (start === this.BOOKMARK);
-    
-    for(var trackNumber = start; trackNumber < end; trackNumber++) {
-      this.process(trackNumber);
+    this.init();
 
+    let shouldUpdateBookmark = (start === this.BOOKMARK);
+
+    for(var trackNumber = start; trackNumber < end; trackNumber++) {
+      await this._process(trackNumber);
+      
+      shouldUpdateBookmark ||= (trackNumber === this.BOOKMARK);
       if(shouldUpdateBookmark) {
         this.BOOKMARK = trackNumber;
       }
@@ -27,17 +30,17 @@ RUNNER = {
   },
 
   async runSpecific(indices) {
+    this.init();
+
     for(const trackNumber of indices) {
-      await this.process(trackNumber);
+      await this._process(trackNumber);
     }
   },
 
-  async process(trackNumber) {
+  async _process(trackNumber) {
     if(trackNumber > LIBRARY.length) {
       return false;
     }
-
-    this.init();
 
     const spotifyTrack = LIBRARY[trackNumber];
 
