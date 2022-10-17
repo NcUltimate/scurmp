@@ -4,10 +4,10 @@ RUNNER = {
   LAST_SEARCHED_AT: new Date(),
 
   async init() {
-    if(!SC.$) {
-      console.log('Initializing SC...');
-      await SC.init();
-      console.log('SC Initialized.');
+    if(!SOUNDCLOUD.$) {
+      console.log('Initializing SOUNDCLOUD...');
+      await SOUNDCLOUD.init();
+      console.log('SOUNDCLOUD Initialized.');
     }
 
     if(!this?.MISSING?.length || (this.MISSING.length === 0 && NO_MATCH)) {
@@ -50,7 +50,7 @@ RUNNER = {
       
     // console.log("IDENTIFYING...");
     this.LAST_SEARCHED_AT = new Date();
-    let result = await SC.identify(
+    let result = await SOUNDCLOUD.identify(
       spotifyTrack.name,
       spotifyTrack.artists,
       remixParam,
@@ -59,35 +59,25 @@ RUNNER = {
     // If imprecise, reattempt search with just primary artist. Bigger names like Kygo
     // often omit the name of the vocalist or smaller featured artists.
     if(!this._is_precise(result.type)) {
-      // console.log("IMPRECISE, TRYING AGAIN...");
-      // SC._clear_search();
-
       let result2 = await this._throttle(() => {
         this.LAST_SEARCHED_AT = new Date();
-        return SC.identify(
+        return SOUNDCLOUD.identify(
           spotifyTrack.name,
           spotifyTrack.artists.slice(0, 1),
           remixParam,
         );
       });
 
-      // console.log("FOUND NEW RESULT");
-
       if(this._is_precise(result2.type)) {
-        // console.log("FOUND MORE PRECISE RESULT");
         result = result2
       }
     }
-    // console.log({result});
-    // console.log("CONTINUING...");
 
     if(result.type === 'no_match') {
       this.MISSING[trackNumber] = spotifyTrack;
     }
 
-    // console.log("ADDING TO PLAYLIST");
-    const playlistAddResult = await SC.addToPlaylist(result);
-    // console.log("ADDED TO PLAYLIST");
+    const playlistAddResult = await SOUNDCLOUD.addToPlaylist(result);
 
     console.log([
       trackNumber.toString().padStart(4, '0'),
@@ -103,7 +93,7 @@ RUNNER = {
   _waitForOverlayToClose() {
     return new Promise((resolve) => {
       const waitForOverlayToCloseID = setInterval(() => {
-        const $playlistModal = SC.$('[id*=overlay].modal .modal__modal');
+        const $playlistModal = SOUNDCLOUD.$('[id*=overlay].modal .modal__modal');
         if($playlistModal.length === 0) {
           clearInterval(waitForOverlayToCloseID);
           return resolve();

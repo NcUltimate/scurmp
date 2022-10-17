@@ -1,4 +1,4 @@
-SC = {
+SOUNDCLOUD = {
   RECORD_LABELS: [
     "2-Dutch",
     "3BEAT",
