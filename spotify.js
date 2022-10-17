@@ -1,29 +1,81 @@
 SPOTIFY = {
   LIKED_SONGS: 'Liked Songs',
+  PLAYLIST_VIEW_QUERY: '.Root__main-view .os-viewport-native-scrollbars-invisible',
+  PLAYLIST_HEADER_QUERY: '[data-testid="playlist-page"] h1',
+  PLAYLIST_TABLE_QUERY: '[aria-rowcount][aria-label][role="grid"][aria-label]',
+  PLAYLIST_TRACKS_QUERY: '[role="row"][aria-rowindex]:not([class])',
+
+  LIBRARY: {},
 
   init() {
     this._loadJQuery();
     return this;
   },
 
-  async tracklist(playlist = this.LIKED_SONGS) {
+  async tracks(searchName = this.LIKED_SONGS) {
+    // Make sure we're ready to go
     if(!this.$) { this.init(); }
 
-    const result = this._select_playlist(playlist);
+    // Choose a playlist matching the search term
+    const result = this._select_playlist(searchName);
     if(!result.success) {
-      return this.$();
+      return []
     }
 
+    // Normalize the search result and ensure we haven't scanned it already,
+    // creating a new array to store the search results in if needed.
+    const nPlaylistName = this._normalize(result.name);
+    if(this.LIBRARY[nPlaylistName]?.length > 0) {
+      return this.LIBRARY[nPlaylistName];
+    } else {
+      this.LIBRARY[nPlaylistName] = [];
+    }
+
+    // Wait for the playlist page to load
     await this._open_playlist(result);
 
-    let library = [];
-    let $playlistView = this.$('.Root__main-view .os-viewport-native-scrollbars-invisible');
-
+    let previousDigest = '';
+    let currentDigest = this._get_playlist_digest();
+    while(currentDigest !== previousDigest) {
+      this._process_tracks();
+      previousDigest = currentDigest;
+      currentDigest = this._get_playlist_digest();
+    }
 
     y = $playlistView.scrollTop() 
 
 
-    return $trackElements;
+    return [];
+  },
+
+  $view() {
+    return this.$(this.PLAYLIST_VIEW_QUERY);
+  },
+
+  $header() {
+    return this.$(this.PLAYLIST_HEADER_QUERY);
+  },
+
+  $table() {
+    return this.$(this.PLAYLIST_TABLE_QUERY).eq(0);
+  },
+
+  $tracks() {
+    return this.$table().find(this.PLAYLIST_TRACKS_QUERY);
+  },
+
+  _get_playlist_digest() {
+    return this
+      .$tracks()
+      .map((i, t) => this.$(t).text())
+      .toArray()
+      .join();
+  },
+
+  _process_tracks() {
+    this.$tracks().each((_i, track) => {
+      // TODO
+    });
   },
 
   _select_playlist(searchName) {
@@ -47,7 +99,8 @@ SPOTIFY = {
     if($matchingPlaylists.length === 0) {
       return {
         success: false,
-        playlist: '',
+        name: '',
+        playlist: undefined,
         reason: 'no_match',
       };
     }
@@ -66,7 +119,8 @@ SPOTIFY = {
       if(Number.isNaN(playlistIndex)) {
         return {
           success: false,
-          playlist: '',
+          name: '',
+          playlist: undefined,
           reason: 'no_selection',
         };
       }
@@ -91,7 +145,7 @@ SPOTIFY = {
 
       const intervalID = setInterval(() => {
         const $trackElements = this.$('[data-testid="internal-track-link"]');
-        const playlistHeaderText = this.$('[data-testid="playlist-page"] h1').text();
+        const playlistHeaderText = this.$header().text();
 
         if(playlistHeaderText === playlistName && $trackElements.length > 0) {
           clearInterval(intervalID);
