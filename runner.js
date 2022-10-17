@@ -1,5 +1,5 @@
 RUNNER = {
-  BOOKMARK: 700,
+  BOOKMARK: 1837,
   MISSING: {},
   LAST_SEARCHED_AT: new Date(),
 
@@ -15,7 +15,7 @@ RUNNER = {
     }
   },
 
-  async run(start = this.BOOKMARK, end = LIBRARY.length) {
+  async run(start = this.BOOKMARK, end = this.BOOKMARK + 50) {
     await this.init();
 
     let shouldUpdateBookmark = (start === this.BOOKMARK);
