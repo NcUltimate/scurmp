@@ -5,6 +5,9 @@ SPOTIFY = {
   PLAYLIST_TABLE_QUERY: '[aria-rowcount][aria-label][role="grid"][aria-label]',
   PLAYLIST_TRACKS_QUERY: '[role="row"][aria-rowindex]:not([class])',
 
+  TRACK_INDEX_QUERY: '[role="gridcell"][aria-colindex="1"]',
+  TRACK_TITLE_QUERY: '[role="gridcell"][aria-colindex="2"] a[data-testid="internal-track-link"]',
+
   LIBRARY: {},
 
   init() {
@@ -34,18 +37,13 @@ SPOTIFY = {
     // Wait for the playlist page to load
     await this._open_playlist(result);
 
-    let previousDigest = '';
-    let currentDigest = this._get_playlist_digest();
-    while(currentDigest !== previousDigest) {
-      this._process_tracks();
-      previousDigest = currentDigest;
-      currentDigest = this._get_playlist_digest();
+    const numTracksInPlaylist = parseInt(this.$table().attr('aria-rowcount')) - 1;
+    while(this.LIBRARY[nPlaylistName].length < numTracksInPlaylist) {
+      this._process_visible_tracks(nPlaylistName);
+      await this._load_more_tracks();
     }
 
-    y = $playlistView.scrollTop() 
-
-
-    return [];
+    return this.LIBRARY[nPlaylistName];
   },
 
   $view() {
@@ -72,9 +70,49 @@ SPOTIFY = {
       .join();
   },
 
-  _process_tracks() {
+  _process_visible_tracks(nPlaylistName) {
     this.$tracks().each((_i, track) => {
-      // TODO
+      const $track = this.$(track);
+
+      // Index always starts at 1 on Spotify
+      const index = parseInt($track.find(this.TRACK_INDEX_QUERY).text()) - 1;
+      if(this.LIBRARY?.[nPlaylistName]?.[index]) {
+        return;
+      }
+
+      const $title = $track.find(this.TRACK_TITLE_QUERY);
+      const title = $title.text().toLowerCase();
+      const titleBreak = title.search(/[\(\-]/);
+
+      let prettyTitle = title;
+      if(titleBreak !== -1) {
+        prettyTitle = title.substring(0, titleBreak).trim();
+      }
+
+      const $artists = $title.siblings('span').eq(0);
+      const prettyArtists = $artists.text().split(', ').map(a => a.toLowerCase());
+
+      let remixArtist;
+      let maxSearchIndex = -1;
+      prettyArtists.forEach(artistName => {
+        const possibleRemixArtistRegexp = new RegExp(`${artistName}.+?(?:remix|bootleg|edit)`);
+        const searchResult = title.search(possibleRemixArtistRegexp);
+        if(searchResult > maxSearchIndex) {
+          maxSearchIndex = searchResult;
+          remixArtist = artistName;
+        }
+      });
+
+      this.LIBRARY[nPlaylistName][index] = Object.assign({},
+        {
+          name: prettyTitle,
+          artists: prettyArtists,
+        },
+        !remixArtist ? {} : {
+          is_remix: true,
+          remix_artist: remixArtist,
+        },
+      );
     });
   },
 
@@ -147,8 +185,27 @@ SPOTIFY = {
         const $trackElements = this.$('[data-testid="internal-track-link"]');
         const playlistHeaderText = this.$header().text();
 
-        if(playlistHeaderText === playlistName && $trackElements.length > 0) {
+        if(playlistHeaderText === target.name && $trackElements.length > 0) {
           clearInterval(intervalID);
+          return resolve();
+        }
+      }, 50);
+    });
+  },
+
+  _load_more_tracks() {
+    return new Promise((resolve) => {
+      let maxWait = 40;
+      const currentDigest = this._get_playlist_digest();
+
+      const $visibleTracks = this.$tracks();
+      $visibleTracks[$visibleTracks.length - 1].scrollIntoView();
+
+      const waitInterval = setInterval(() => {
+        const newDigest = this._get_playlist_digest();
+
+        if(maxWait-- === 0 || currentDigest !== newDigest) {
+          clearInterval(waitInterval);
           return resolve();
         }
       }, 50);
