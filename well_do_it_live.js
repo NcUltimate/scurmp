@@ -91,6 +91,7 @@ SC = {
     "Spinnin' Records",
     "Spinnin' Talent Pool",
     "Spirited.",
+    "Spotted Records",
     "Strange Fruits",
     "Subsidia",
     "Take It Easy Records",
@@ -123,13 +124,13 @@ SC = {
     'ℤ': 'z', //e.g. LℤRD
   },
   ARTIST_EXCEPTIONS: {
-    'k.flay' : 'kflay',
-    'dillon francis' : 'dillonfrancis',
     'eliminate' : 'eliminate*',
     'richard judge' : 'j.u.d.g.e.',
     'dj shaan': 'shaan',
     'ghastly': '𝐆𝐇𝐀𝐒𝐓𝐋𝐘||𝐆𝐇𝐄𝐍𝐆𝐀𝐑',
     'nurko': 'ɴᴜʀᴋᴏ💧',
+    'third party': 'Third ≡ Party',
+    'wooli': 'Wooli 🐘',
   },
   async init() {
     this.RECORD_LABELS = this.RECORD_LABELS.map(label => this._sanitize(label));
