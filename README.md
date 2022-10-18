@@ -11,30 +11,8 @@ Follow these steps closely:
     - A developer console for the **Spotify** tab
     - A developer console for the **SoundCloud** tab
 
-## 2. Prepare SoundCloud Playlists
-Unfortunately Soundcloud has a playlist limit of 500 songs. It also does not allow creating
-an empty playlist. Playlists can only be created from a dropdown menu under a track.
-
-Because of this, we need to prepare SoundCloud with "empty" playlists where we can store 
-our Spotify tracks.
-
-1. **Manually search SoundCloud** for `Math.ceil(# songs in your playlist / 500)` tracks.
-    - Example:
-        Let's say I have 1406 liked songs, so I should search for `Math.ceil(1406/500)` = 3 tracks.
-2. **Create one new playlist per song you just searched**. The playlist must have "Transfer" somewhere in its name.
-    - Example:
-        - I search for the song "The Business" by Tiësto, "Stay" by Zedd, and "Fangs" by Ghastly.
-        - I create a new playlist from "The Business" named `Transfer 1`
-        - I create a new playlist from "Stay" named `Transfer 2`
-        - I create a new playlist from "Fangs" named `Transfer 3`
-3. **Search for any song on SoundCloud** and create a playlist from it named `Transfer Closest`.
-    - This paylist will be your 'junk drawer' for songs that don't quite match.
-    - For example, many songs are uploaded by random users instead of the label or artist. These songs
-    may not always be around if they get copyright stricken.
-    - All close matches during the transfer will go here.
-
-## 3. Copy your desired Spotify playlist
-1. **Copy** [the contents](https://raw.githubusercontent.com/NcUltimate/scurmp/main/all.min.js) of `spotify.js` and paste it into the **Spotify** console.
+## 2. Copy your desired Spotify playlist
+1. **Copy** [the contents](https://raw.githubusercontent.com/NcUltimate/scurmp/main/spotify.js) of `spotify.js` and paste them into the **Spotify** console.
 2. In the **Spotify** console, type `SPOTIFY.tracks()` to copy all of the tracks from your Liked Songs.
     - If you want to copy a specific playlist, e.g. 'trap house', you can type `SPOTIFY.tracks('trap house')` into the console.
     - Don't worry about getting an exact playlist name. The script will prompt you to pick the correct playlist if more than one matches.
@@ -51,7 +29,7 @@ our Spotify tracks.
 4. **Paste the copied output into the SoundCloud console**.
 
 ## 4. Begin converting on SoundCloud
-Note -this script has been heavily biased toward electronic music playlists. Common record labels and special character substitutions have been added to account for most cases that will be encountered when transferring known electronic tracks on SoundCloud.
+Note before beginning - this script has been heavily biased toward electronic music playlists. Common record labels and special character substitutions have been added to account for most cases that will be encountered when transferring known electronic tracks on SoundCloud.
 
 With that in mind, this script tries very hard to only add exact matches to the `Transfer` playlists. It knows how to do this by looking for these known labels as the upload users, or by looking for any of the track artists as the upload user.
 
@@ -61,10 +39,11 @@ Another note - EDM artists love to be quirky with their letter substitutions. `�
 
 If you come across an artist who has a special character that the script is not handling properly, you can also add your own custom character exceptions by typing `SOUNDCLOUD.addTranslation('å', 'a')`, where the first letter is the one to be translated, and the 2nd is the english letter.
 
-1. **Copy** [the contents](https://raw.githubusercontent.com/NcUltimate/scurmp/main/soundcloud.js) of `soundcloud.js` and paste it into the **SoundCloud** console.
+1. **Copy** [the contents](https://raw.githubusercontent.com/NcUltimate/scurmp/main/soundcloud.js) of `soundcloud.js` and paste them into the **SoundCloud** console.
 2. In the **SoundCloud** console, type `RUNNER.run()`. You should see some lines begin to print to the console in a tabular format.
-    - Wait for this run to finish. Try to make sure your computer doesn't go to sleep. It takes about 3 mins to run per 50 songs.
-    - Once the script is done, all tracks should be located in your `Transfer` playlists.
+    - Wait for this run to finish. Try to make sure your computer doesn't go to sleep. It takes about 3 mins to process 50 songs.
+    - Once the script is done, all tracks should be located in playlists with the name `Transfer`.
+    - All tracks that were approximate matches will be in playlists named `Transfer Closest`.
     - If you want to know which tracks failed to transfer, you can type `RUNNER.MISSING`
 3. You're all done!
 
