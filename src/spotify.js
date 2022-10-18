@@ -57,8 +57,8 @@ SPOTIFY = {
     return this.$findAll(this.PLAYLIST_TRACKS_QUERY, this.$table());
   },
 
-  $find(selector) {
-    return document.querySelector(selector);
+  $find(selector, $element = document) {
+    return $element.querySelector(selector);
   }, 
 
   $findAll(selector, $element = document) {
@@ -76,12 +76,12 @@ SPOTIFY = {
   _process_visible_tracks(nPlaylistName) {
     this.$tracks().forEach($track => {
       // Index always starts at 1 on Spotify
-      const index = parseInt($track.querySelector(this.TRACK_INDEX_QUERY).innerText) - 1;
-      if(this.PLAYLISTS?.[nPlaylistName]?.[index]) {
+      const index = parseInt(this.$find(this.TRACK_INDEX_QUERY, $track)?.innerText || '') - 1;
+      if(index < 0 || this.PLAYLISTS?.[nPlaylistName]?.[index]) {
         return;
       }
 
-      const $title = $track.querySelector(this.TRACK_TITLE_QUERY);
+      const $title = this.$find(this.TRACK_TITLE_QUERY, $track);
       const title = $title.innerText.toLowerCase();
       const titleBreak = title.search(/[\(\-]/);
 
@@ -90,7 +90,7 @@ SPOTIFY = {
         prettyTitle = title.substring(0, titleBreak).trim();
       }
 
-      const $artists = $title.parentElement.querySelector('span');
+      const $artists = this.$findAll('span', $title.parentElement).pop();
       const prettyArtists = $artists.innerText.split(', ').map(a => a.toLowerCase());
 
       let remixArtist;

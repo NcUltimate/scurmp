@@ -1,5 +1,4 @@
 SOUNDCLOUD = {
-  $: jQuery,
   RECORD_LABELS: [
     "2-Dutch",
     "3BEAT",
@@ -99,6 +98,7 @@ SOUNDCLOUD = {
     "TechniqueRecordings",
     "The Music Network",
     "This Never Happened",
+    "Thissongissick.com",
     "Tuvali",
     "Uprise Music",
     "ZERO COOL",
@@ -136,19 +136,27 @@ SOUNDCLOUD = {
   init() {
     this.RECORD_LABELS = this.RECORD_LABELS.map(label => this._sanitize(label));
   },
+
+  $find(selector, $element = document) {
+    return $element.querySelector(selector);
+  }, 
+
+  $findAll(selector, $element = document) {
+    const result = $element.querySelectorAll(selector);
+    return result ? Array.from(result) : [];
+  },  
+
   async search(term) {
     let $searchResultItems = await this._search_for(term);
-    return $searchResultItems.map((index, result) => {
-      const $result = this.$(result);
+    return $searchResultItems.map(($result, index) => {
+      const $title = $result.querySelector('.soundTitle__title');
+      title = $title?.innerText || '';
 
-      let title = $result.find('.soundTitle__title');
-      title = title.length === 0 ? '' : title.text();
+      const $user = $result.querySelector('.soundTitle__usernameText');
+      user = $user?.innerText || '';
 
-      let user = $result.find('.soundTitle__usernameText');
-      user = user.length === 0 ? '' : user.text();
-
-      let plays = $result.find('.sound__soundStats .sc-ministats-item');
-      plays = plays.length === 0 ? 0 : plays.attr('title').replaceAll(/\D/g, '');
+      const $plays = $result.querySelector('.sound__soundStats .sc-ministats-item');
+      plays = $plays?.getAttribute('title')?.replaceAll(/\D/g, '') || 0;
 
       return {
         title: this._sanitize(title),
@@ -178,7 +186,7 @@ SOUNDCLOUD = {
     //    - Track title contains the song title (allows for common endings like [OUT NOW], etc)
     //    - User is one of the artists
     //    - Track title contains a remix name if allowed
-    exactMatches = searchResults.filter((_idx, result) => {
+    exactMatches = searchResults.filter(result => {
       if(!result.title.includes(nTrackName)) {
         return false;
       }
@@ -209,7 +217,7 @@ SOUNDCLOUD = {
     // 2. Test for record label uploads
     //    - Artist and track name are the title, and the track was released by the label
     const artistRegexp = new RegExp(nArtistNames.map(name => this._sanitize_regex(name)).join('|'));
-    recordLabelMatches = searchResults.filter((_idx, result) => {
+    recordLabelMatches = searchResults.filter(result => {
       let baseCriteria =(
         result.title.includes(nTrackName)
           && artistRegexp.test(result.title)
@@ -237,7 +245,7 @@ SOUNDCLOUD = {
     //    - Filter out remixes, unless requested
     //    - Filter out low play count
     //    - Sort by play count, pick the first
-    closestResults = searchResults.filter((_idx, result) => {
+    closestResults = searchResults.filter(result => {
       // Does the title at least include all parts of the searched track name
       let allTrackNamePartsIncluded = true;
       nTrackName.split(/\s+/).forEach(trackNamePart => {
@@ -288,19 +296,19 @@ SOUNDCLOUD = {
     const $playlistOverlay = await this._open_playlist_modal(result.index);
 
     // Make sure we're selecting a transfer playlist
-    const $transferPlaylists = $playlistOverlay.find('.addToPlaylistList__item').filter((_i, playlist) => {
-      const $title = this.$(playlist).find('a.addToPlaylistItem__titleLink');
-      return $title.attr('title').includes('Transfer');
+    const $transferPlaylists = this.$findAll('.addToPlaylistList__item', $playlistOverlay).filter($playlist => {
+      const $title = this.$find('a.addToPlaylistItem__titleLink', $playlist);
+      return $title?.getAttribute('title')?.includes('Transfer');
     });
 
     // Make sure this track is not already in a transfer paylist
-    const $alreadyInPlaylists = $transferPlaylists.filter((_i, playlist) => {
-      const $addToPlaylistButton = this.$(playlist).find('button.addToPlaylistButton');
-      return $addToPlaylistButton.attr('title') === 'Remove';
+    const $alreadyInPlaylists = $transferPlaylists.filter($playlist => {
+      const $addToPlaylistButton = this.$find('button.addToPlaylistButton', $playlist);
+      return $addToPlaylistButton?.getAttribute('title') === 'Remove';
     });
 
     if($alreadyInPlaylists.length > 0) {
-      $playlistOverlay.find('button.modal__closeButton').click();
+      this.$find('button.modal__closeButton', $playlistOverlay).click();
       return {
         success: false,
         reason: 'already_added',
@@ -309,14 +317,14 @@ SOUNDCLOUD = {
 
     // If this is not an "exact" or "label" match, add to our Approximate ("Closest") Transfers list
     if(result.type === 'closest') {
-      const $transferListClosest = $transferPlaylists.filter((_i, playlist) => {
-        const $title = this.$(playlist).find('a.addToPlaylistItem__titleLink');
-        return $title.attr('title').includes('Closest');
+      const $transferListClosest = $transferPlaylists.filter($playlist => {
+        const $title = this.$find('a.addToPlaylistItem__titleLink', $playlist);
+        return $title?.getAttribute('title')?.includes('Closest');
       });
 
       let result;
       if($transferListClosest.length > 0) {
-        $transferListClosest.eq(0).find('button.addToPlaylistButton').click();
+        this.$find('button.addToPlaylistButton', $transferListClosest[0]).click();
         result = { 
           success: true,
           reason: 'added_to_closest'
@@ -328,29 +336,28 @@ SOUNDCLOUD = {
         };
       }
 
-      $playlistOverlay.find('button.modal__closeButton').click();
+      this.$find('button.modal__closeButton', $playlistOverlay).click();
       if(!result.success) {
         alert('Please create a new playlist with "Transfer" and "Closest" in the name to continue.');
       }
       return result;
     }
 
-    const $specificPlaylists = $transferPlaylists.filter((_i, playlist) => {
-      const $title = this.$(playlist).find('a.addToPlaylistItem__titleLink');
-      return !$title.attr('title').includes('Closest');
+    const $specificPlaylists = $transferPlaylists.filter($playlist => {
+      const $title = this.$find('a.addToPlaylistItem__titleLink', $playlist);
+      return !$title?.getAttribute('title')?.includes('Closest');
     });
     
     // Find a "non-closest" transfer playlist with under 500 tracks
-    const $playlistsUnder500 = $specificPlaylists.filter((_i, playlist) => {
-      const trackCount = parseInt(this.$(playlist).find('.addToPlaylistItem__count').text().trim());
+    const $playlistsUnder500 = $specificPlaylists.filter($playlist => {
+      const trackCount = parseInt(this.$find('.addToPlaylistItem__count', $playlist)?.innerText?.trim() || '');
       return trackCount < 500;
     });
 
     // At least one playlist can accommodate this track. Add it and close the modal
     if($playlistsUnder500.length > 0) {
-      const $playlist = $playlistsUnder500.eq(0);
-      $playlist.find('button.addToPlaylistButton').click();
-      $playlistOverlay.find('button.modal__closeButton').click();
+      this.$find('button.addToPlaylistButton', $playlistsUnder500[0]).click();
+      this.$find('button.modal__closeButton', $playlistOverlay).click();
       return { 
         success: true,
         reason: 'success'
@@ -358,7 +365,7 @@ SOUNDCLOUD = {
     }
 
     // Otherwise, we need to make a new transfer paylist.
-    $playlistOverlay.find('button.modal__closeButton').click();
+    this.$find('button.modal__closeButton', $playlistOverlay).click();
     alert('Please create a new playlist with "Transfer" in the name to continue.');
     return { 
       success: false,
@@ -386,36 +393,26 @@ SOUNDCLOUD = {
     return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replaceAll(/[^\\\w]/g, '$&?')
   },
   _get_results_digest() {
-    searchID = this.$('.searchItem .sc-link-primary');
-    if(searchID.length === 0) {
-      searchID = ''; 
-    } else {
-      searchID = searchID.text().trim().replaceAll(/\W/g, '');
-    }
-    return searchID;
+    const searchID = this.$find('.searchItem .sc-link-primary');
+    return searchID?.innerText?.trim()?.replaceAll(/\W/g, '') || '';
   },
   _search_for(term) {
-    return new Promise((resolve) => {
+    return new Promise(resolve => {
       if(this._is_current_search_id(term)) {
-        // console.log('SAME SEARCH');
         return resolve(this.currentSearchResults);
       }
 
       // perform search
-      this.$('input.headerSearch__input').val(`${term}`);
-      this.$('button.headerSearch__submit').click();
+      this.$find('input.headerSearch__input').value = term;
+      this.$find('button.headerSearch__submit').click();
 
       let maxTries = 16;
       const currentSearchDigest = this._get_results_digest();
       const searchIntervalID = setInterval(() => {
         maxTries--;
 
-        // console.log("DIGESTING");
-
         if(maxTries === 0) {
-
-          // console.log("HIT MAX TRIES");
-          this.currentSearchResults = this.$();
+          this.currentSearchResults = [];
           this.currentSearchID = this._to_search_id(term);
           clearInterval(searchIntervalID);
           return resolve(this.currentSearchResults);
@@ -426,12 +423,8 @@ SOUNDCLOUD = {
           return;
         }
 
-        // console.log('DIGESTING');
-        // console.log({ID: this.currentSearchID, newSearchDigest, currentSearchDigest});
-
         if(!this.currentSearchID || newSearchDigest !== currentSearchDigest) {
-          // console.log('DIGESTED');
-          this.currentSearchResults = this.$('.searchItem__trackItem.track');
+          this.currentSearchResults = this.$findAll('.searchItem__trackItem.track');
           this.currentSearchID = this._to_search_id(term);
           clearInterval(searchIntervalID);
           return resolve(this.currentSearchResults);
@@ -440,16 +433,16 @@ SOUNDCLOUD = {
     });
   },
   _open_playlist_modal(index) {
-    return new Promise((resolve) => {
+    return new Promise(resolve => {
       // Click 'More' then 'Add to playlist'
-      this.$('.track.searchItem__trackItem').eq(index).find('.sc-button-more').click();
-      this.$('body .dropdownMenu[id*="dropdown-button"] .sc-button-addtoset').click();
+      this.$find('.sc-button-more', this.$findAll('.track.searchItem__trackItem')[index]).click();
+      this.$find('body .dropdownMenu[id*="dropdown-button"] .sc-button-addtoset').click();
 
       const waitIntervalID = setInterval(() => {
-        const $playlistModal = this.$('[id*=overlay].modal .modal__modal');
-        if($playlistModal.length > 0) {
-          const $playlistItemTitles = $playlistModal.find('.addToPlaylistList__item a.addToPlaylistItem__titleLink');
-          if($playlistItemTitles.length > 0) {
+        const $playlistModal = this.$find('[id*=overlay].modal .modal__modal');
+        if($playlistModal) {
+          const $hasPlaylistItemTitles = this.$find('.addToPlaylistList__item a.addToPlaylistItem__titleLink', $playlistModal);
+          if($hasPlaylistItemTitles) {
             clearInterval(waitIntervalID);
             setTimeout(() => {
               return resolve($playlistModal);
@@ -464,5 +457,118 @@ SOUNDCLOUD = {
   },
   _is_current_search_id(term) {
     return this.currentSearchID === this._to_search_id(term);
+  },
+};
+
+RUNNER = {
+  BOOKMARK: -1,
+  AT_ONCE: 50,
+  MISSING: {},
+  LAST_SEARCHED_AT: new Date(),
+
+  async run(start = this.BOOKMARK + 1, end = start + this.AT_ONCE) {
+    await SOUNDCLOUD.init();
+
+    let shouldUpdateBookmark = (start === this.BOOKMARK + 1);
+
+    for(var trackNumber = start; trackNumber < end; trackNumber++) {
+      await this._process(trackNumber);
+      
+      shouldUpdateBookmark ||= (trackNumber === this.BOOKMARK);
+      if(shouldUpdateBookmark) {
+        this.BOOKMARK = trackNumber;
+      }
+    }
+  },
+
+  async runSpecific(indices) {
+    await SOUNDCLOUD.init();
+
+    for(const trackNumber of indices) {
+      await this._process(trackNumber);
+    }
+  },
+
+  async _process(trackNumber) {
+    if(trackNumber > PLAYLIST.length) {
+      return false;
+    }
+
+    const spotifyTrack = PLAYLIST[trackNumber];
+
+    const remixParam =
+        spotifyTrack.is_remix ? { remixArtist: spotifyTrack.remix_artist } : {};
+      
+    // console.log("IDENTIFYING...");
+    this.LAST_SEARCHED_AT = new Date();
+    let result = await SOUNDCLOUD.identify(
+      spotifyTrack.name,
+      spotifyTrack.artists,
+      remixParam,
+    );
+
+    // If imprecise, reattempt search with just primary artist. Bigger names like Kygo
+    // often omit the name of the vocalist or smaller featured artists.
+    if(!this._is_precise(result.type) && spotifyTrack.artists.length > 1) {
+      let result2 = await this._throttle(() => {
+        this.LAST_SEARCHED_AT = new Date();
+        return SOUNDCLOUD.identify(
+          spotifyTrack.name,
+          spotifyTrack.artists.slice(0, 1),
+          remixParam,
+        );
+      });
+
+      if(this._is_precise(result2.type)) {
+        result = result2
+      }
+    }
+
+    if(result.type === 'no_match') {
+      this.MISSING[trackNumber] = spotifyTrack;
+    }
+
+    const playlistAddResult = await SOUNDCLOUD.addToPlaylist(result);
+
+    console.log([
+      trackNumber.toString().padStart(4, '0'),
+      spotifyTrack.name.slice(0, 20).padEnd(20, ' '),
+      spotifyTrack.artists.join(', ').slice(0, 30).padEnd(30, ' '),
+      result.type.padEnd(10, ' '),
+      playlistAddResult.reason.padEnd(15, ' '),
+    ].join(' | '));
+
+    await this._waitForOverlayToClose();
+  },
+
+  atOnce(newAtOnce) {
+    this.AT_ONCE = newAtOnce;
+  },
+
+  _waitForOverlayToClose() {
+    return new Promise((resolve) => {
+      const waitForOverlayToCloseID = setInterval(() => {
+        const $playlistModal = document.querySelector('[id*=overlay].modal .modal__modal');
+        if($playlistModal) {
+          clearInterval(waitForOverlayToCloseID);
+          return resolve();
+        }
+      }, 100);
+    });
+  },
+
+  _throttle(callback, throttleTime = 1000) {
+    return new Promise((resolve) => {
+      const throttleIntervalID = setInterval(() => {
+        if(new Date() - this.LAST_SEARCHED_AT > throttleTime) {
+          clearInterval(throttleIntervalID);
+          return resolve(callback());
+        }
+      }, 50);
+    });
+  },
+
+  _is_precise(precision) {
+    return precision === 'exact' || precision === 'label'
   },
 };
