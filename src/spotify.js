@@ -1,5 +1,4 @@
 SPOTIFY = {
-  $: jQuery,
   LIKED_SONGS: 'Liked Songs',
   PLAYLIST_VIEW_QUERY: '.Root__main-view .os-viewport-native-scrollbars-invisible',
   PLAYLIST_HEADER_QUERY: '[data-testid="playlist-page"] h1',
@@ -32,7 +31,7 @@ SPOTIFY = {
     // Wait for the playlist page to load
     await this._open_playlist(result);
 
-    const numTracksInPlaylist = parseInt(this.$table().attr('aria-rowcount')) - 1;
+    const numTracksInPlaylist = parseInt(this.$table().getAttribute('aria-rowcount')) - 1;
     while(this.PLAYLISTS[nPlaylistName].length < numTracksInPlaylist) {
       this._process_visible_tracks(nPlaylistName);
       await this._load_more_tracks();
@@ -43,41 +42,47 @@ SPOTIFY = {
   },
 
   $view() {
-    return this.$(this.PLAYLIST_VIEW_QUERY);
+    return this.$find(this.PLAYLIST_VIEW_QUERY);
   },
 
   $header() {
-    return this.$(this.PLAYLIST_HEADER_QUERY);
+    return this.$find(this.PLAYLIST_HEADER_QUERY);
   },
 
   $table() {
-    return this.$(this.PLAYLIST_TABLE_QUERY).eq(0);
+    return this.$find(this.PLAYLIST_TABLE_QUERY);
   },
 
   $tracks() {
-    return this.$table().find(this.PLAYLIST_TRACKS_QUERY);
+    return this.$findAll(this.PLAYLIST_TRACKS_QUERY, this.$table());
   },
+
+  $find(selector) {
+    return document.querySelector(selector);
+  }, 
+
+  $findAll(selector, $element = document) {
+    const result = $element.querySelectorAll(selector);
+    return result ? Array.from(result) : [];
+  },  
 
   _get_playlist_digest() {
     return this
       .$tracks()
-      .map((i, t) => this.$(t).text())
-      .toArray()
+      .map($t => $t.innerText)
       .join();
   },
 
   _process_visible_tracks(nPlaylistName) {
-    this.$tracks().each((_i, track) => {
-      const $track = this.$(track);
-
+    this.$tracks().forEach($track => {
       // Index always starts at 1 on Spotify
-      const index = parseInt($track.find(this.TRACK_INDEX_QUERY).text()) - 1;
+      const index = parseInt($track.querySelector(this.TRACK_INDEX_QUERY).innerText) - 1;
       if(this.PLAYLISTS?.[nPlaylistName]?.[index]) {
         return;
       }
 
-      const $title = $track.find(this.TRACK_TITLE_QUERY);
-      const title = $title.text().toLowerCase();
+      const $title = $track.querySelector(this.TRACK_TITLE_QUERY);
+      const title = $title.innerText.toLowerCase();
       const titleBreak = title.search(/[\(\-]/);
 
       let prettyTitle = title;
@@ -85,8 +90,8 @@ SPOTIFY = {
         prettyTitle = title.substring(0, titleBreak).trim();
       }
 
-      const $artists = $title.siblings('span').eq(0);
-      const prettyArtists = $artists.text().split(', ').map(a => a.toLowerCase());
+      const $artists = $title.parentElement.querySelector('span');
+      const prettyArtists = $artists.innerText.split(', ').map(a => a.toLowerCase());
 
       let remixArtist;
       let maxSearchIndex = -1;
@@ -119,17 +124,17 @@ SPOTIFY = {
       return {
         success: true,
         name: 'Liked Songs',
-        playlist: this.$('a[href="/collection/tracks"]')[0],
+        playlist: this.$find('a[href="/collection/tracks"]'),
         reason: 'default',
       };
     }
 
-    const $playlists = this.$('[data-testid="rootlist-item"] a');
-    const $matchingPlaylists = $playlists.filter((_i, playlistElement) => {
-      const nPossiblePlaylistName = this._normalize(this.$(playlistElement).text());
+    const $playlists = this.$findAll('[data-testid="rootlist-item"] a');
+    const $matchingPlaylists = $playlists.filter($playlistElement => {
+      const nPossiblePlaylistName = this._normalize($playlistElement.innerText);
       return nPossiblePlaylistName.includes(nPlaylistName);
     });
-
+    
     if($matchingPlaylists.length === 0) {
       return {
         success: false,
@@ -143,7 +148,7 @@ SPOTIFY = {
     if($matchingPlaylists.length > 1) {
       const promptStr =
         'Multiple playlists match your entry. Which would you like to process?\n\n'
-        + $matchingPlaylists.map((i, p) => `${i}. ${this.$(p).text()}`).toArray().join('\n');
+        + $matchingPlaylists.map(($p, i) => `${i}. ${$p.innerText}`).join('\n');
 
       playlistIndex = -1;
       while(playlistIndex !== NaN && (playlistIndex < 0 || playlistIndex >= $matchingPlaylists.length)) {
@@ -160,17 +165,17 @@ SPOTIFY = {
       }
     }
 
-    const $selection = $matchingPlaylists.eq(playlistIndex);
+    const $selection = $matchingPlaylists[playlistIndex];
     return {
       success: true,
-      name: $selection.text(),
-      playlist: $selection[0],
+      name: $selection.innerText,
+      playlist: $selection,
       reason: 'selection',
     };
   },
 
   _open_playlist(target) {
-    return new Promise((resolve) => {
+    return new Promise(resolve => {
       if(!target.success) {
         return resolve();
       }
@@ -178,8 +183,8 @@ SPOTIFY = {
       target.playlist.click();
 
       const intervalID = setInterval(() => {
-        const $trackElements = this.$('[data-testid="internal-track-link"]');
-        const playlistHeaderText = this.$header().text();
+        const $trackElements = this.$findAll('[data-testid="internal-track-link"]');
+        const playlistHeaderText = this.$header()?.innerText;
 
         if(playlistHeaderText === target.name && $trackElements.length > 0) {
           clearInterval(intervalID);
@@ -190,7 +195,7 @@ SPOTIFY = {
   },
 
   _load_more_tracks() {
-    return new Promise((resolve) => {
+    return new Promise(resolve => {
       let maxWait = 40;
       const currentDigest = this._get_playlist_digest();
 
