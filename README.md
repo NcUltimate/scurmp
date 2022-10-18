@@ -34,7 +34,7 @@ our Spotify tracks.
     - All close matches during the transfer will go here.
 
 ## 3. Copy your desired Spotify playlist
-1. **Copy** [the contents](https://raw.githubusercontent.com/NcUltimate/scurmp/main/all.min.js) of `all.min.js` and paste it into the **Spotify** console.
+1. **Copy** [the contents](https://raw.githubusercontent.com/NcUltimate/scurmp/main/all.min.js) of `spotify.js` and paste it into the **Spotify** console.
 2. In the **Spotify** console, type `SPOTIFY.tracks()` to copy all of the tracks from your Liked Songs.
     - If you want to copy a specific playlist, e.g. 'trap house', you can type `SPOTIFY.tracks('trap house')` into the console.
     - Don't worry about getting an exact playlist name. The script will prompt you to pick the correct playlist if more than one matches.
@@ -61,7 +61,7 @@ Another note - EDM artists love to be quirky with their letter substitutions. `Æ
 
 If you come across an artist who has a special character that the script is not handling properly, you can also add your own custom character exceptions by typing `SOUNDCLOUD.addTranslation('Ã¥', 'a')`, where the first letter is the one to be translated, and the 2nd is the english letter.
 
-1. **Copy** [the contents](https://raw.githubusercontent.com/NcUltimate/scurmp/main/all.min.js) of `all.min.js` and paste it into the **SoundCloud** console.
+1. **Copy** [the contents](https://raw.githubusercontent.com/NcUltimate/scurmp/main/soundcloud.js) of `soundcloud.js` and paste it into the **SoundCloud** console.
 2. In the **SoundCloud** console, type `RUNNER.run()`. You should see some lines begin to print to the console in a tabular format.
     - Wait for this run to finish. Try to make sure your computer doesn't go to sleep. It takes about 3 mins to run per 50 songs.
     - Once the script is done, all tracks should be located in your `Transfer` playlists.

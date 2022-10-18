@@ -538,7 +538,9 @@ RUNNER = {
       playlistAddResult.reason.padEnd(15, ' '),
     ].join(' | '));
 
-    await this._waitForOverlayToClose();
+    if(result.type !== 'no_match') {
+      await this._waitForOverlayToClose();
+    }
   },
 
   atOnce(newAtOnce) {
