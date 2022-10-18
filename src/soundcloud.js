@@ -1,4 +1,5 @@
 SOUNDCLOUD = {
+  $: jQuery,
   RECORD_LABELS: [
     "2-Dutch",
     "3BEAT",
@@ -132,11 +133,8 @@ SOUNDCLOUD = {
     'third party': 'Third ≡ Party',
     'wooli': 'Wooli 🐘',
   },
-  async init() {
+  init() {
     this.RECORD_LABELS = this.RECORD_LABELS.map(label => this._sanitize(label));
-
-    await this._loadJQuery().then((loadedJQuery) => this.$ = loadedJQuery);
-    return this;
   },
   async search(term) {
     let $searchResultItems = await this._search_for(term);
@@ -460,26 +458,5 @@ SOUNDCLOUD = {
   },
   _is_current_search_id(term) {
     return this.currentSearchID === this._to_search_id(term);
-  },
-  _loadJQuery() {
-    return new Promise((resolve) => {
-      var jq = document.createElement('script');
-      jq.src = "https://code.jquery.com/jquery-3.6.1.min.js";
-      document.getElementsByTagName('head')[0].appendChild(jq);
-
-      var loadJQueryIntervalID = setInterval(() => {
-        jqueryLoaded = true;
-        try { 
-          jQuery.noConflict();
-        } catch {
-          jqueryLoaded = false;
-        }
-
-        if(jqueryLoaded) { 
-          clearInterval(loadJQueryIntervalID);
-          return resolve(jQuery)
-        };
-      }, 50);
-    });
   },
 };

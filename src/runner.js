@@ -1,24 +1,20 @@
 RUNNER = {
-  BOOKMARK: 1935,
+  BOOKMARK: -1,
   MISSING: {},
   LAST_SEARCHED_AT: new Date(),
 
-  async init() {
-    if(!SOUNDCLOUD.$) {
-      console.log('Initializing SOUNDCLOUD...');
-      await SOUNDCLOUD.init();
-      console.log('SOUNDCLOUD Initialized.');
-    }
+  init() {
+    SOUNDCLOUD.init();
 
     if(!this?.MISSING?.length || (this.MISSING.length === 0 && NO_MATCH)) {
       this.MISSING = NO_MATCH;
     }
   },
 
-  async run(start = this.BOOKMARK, end = this.BOOKMARK + 50) {
+  async run(start = this.BOOKMARK + 1, end = this.BOOKMARK + 51) {
     await this.init();
 
-    let shouldUpdateBookmark = (start === this.BOOKMARK);
+    let shouldUpdateBookmark = (start === this.BOOKMARK + 1);
 
     for(var trackNumber = start; trackNumber < end; trackNumber++) {
       await this._process(trackNumber);
@@ -39,11 +35,11 @@ RUNNER = {
   },
 
   async _process(trackNumber) {
-    if(trackNumber > LIBRARY.length) {
+    if(trackNumber > PLAYLIST.length) {
       return false;
     }
 
-    const spotifyTrack = LIBRARY[trackNumber];
+    const spotifyTrack = PLAYLIST[trackNumber];
 
     const remixParam =
         spotifyTrack.is_remix ? { remixArtist: spotifyTrack.remix_artist } : {};
