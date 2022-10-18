@@ -330,16 +330,14 @@ SOUNDCLOUD = {
           reason: 'added_to_closest'
         };
       } else {
-        result = {
-          success: false,
-          reason: 'missing_closest_playlist',
+        await this._create_new_playlist('Transfer Closest'+(new Date()).getTime())
+        result = { 
+          success: true,
+          reason: 'added_to_new_playlist'
         };
       }
 
       this.$find('button.modal__closeButton', $playlistOverlay).click();
-      if(!result.success) {
-        alert('Please create a new playlist with "Transfer" and "Closest" in the name to continue.');
-      }
       return result;
     }
 
@@ -365,11 +363,11 @@ SOUNDCLOUD = {
     }
 
     // Otherwise, we need to make a new transfer paylist.
+    await this._create_new_playlist('Transfer'+(new Date()).getTime())
     this.$find('button.modal__closeButton', $playlistOverlay).click();
-    alert('Please create a new playlist with "Transfer" in the name to continue.');
     return { 
-      success: false,
-      reason: 'missing_transfer_playlist'
+      success: true,
+      reason: 'added_to_new_playlist'
     };
   },
   addRecordLabel(labelName) {
@@ -452,6 +450,32 @@ SOUNDCLOUD = {
       }, 100);
     });
   },
+  _create_new_playlist(newPlaylistName) {
+    return new Promise(resolve => {
+      // Click the 'Create a playlist' tab
+      this.$findAll('.g-tabs-item a')[1].click();
+
+      // Enter the playlist name
+      const $playlistNameField = this.$find('.textfield.createPlaylist__title input.textfield__input');
+      $playlistNameField.value = newPlaylistName;
+      $playlistNameField.setAttribute('value', newPlaylistName);
+      $playlistNameField.dispatchEvent(new Event('change'));
+
+      // Mark playlist as private
+      this.$findAll('.radioGroup__radio')[1].click();
+
+      // Save the playlist
+      this.$find('button.createPlaylist__saveButton').click();
+
+      // Wait for SoundCloud to tell us we can go to the playlist, indicating we are safe to close the modal
+      const waitIntervalID = setInterval(() => {
+        if(this.$find('.createPlaylist__goToPlaylist')) {
+          clearInterval(waitIntervalID);
+          return resolve();
+        }
+      }, 50);
+    });
+  },
   _to_search_id(term) {
     return term.replaceAll(/\W/g, '');
   },
@@ -498,8 +522,7 @@ RUNNER = {
 
     const remixParam =
         spotifyTrack.is_remix ? { remixArtist: spotifyTrack.remix_artist } : {};
-      
-    // console.log("IDENTIFYING...");
+
     this.LAST_SEARCHED_AT = new Date();
     let result = await SOUNDCLOUD.identify(
       spotifyTrack.name,
