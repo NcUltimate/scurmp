@@ -365,6 +365,12 @@ SOUNDCLOUD = {
       reason: 'missing_transfer_playlist'
     };
   },
+  addRecordLabel(labelName) {
+    this.RECORD_LABELS.push(this._sanitize(labelName));
+  },
+  addTranslation(from, to) {
+    this.SPECIAL_CHAR_MAP[from] = to;
+  },
   _sanitize(name) {
     if(!name) {
       return '';

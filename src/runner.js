@@ -1,5 +1,6 @@
 RUNNER = {
   BOOKMARK: -1,
+  AT_ONCE: 50,
   MISSING: {},
   LAST_SEARCHED_AT: new Date(),
 
@@ -11,7 +12,7 @@ RUNNER = {
     }
   },
 
-  async run(start = this.BOOKMARK + 1, end = this.BOOKMARK + 51) {
+  async run(start = this.BOOKMARK + 1, end = this.BOOKMARK + this.AT_ONCE + 1) {
     await this.init();
 
     let shouldUpdateBookmark = (start === this.BOOKMARK + 1);
@@ -84,6 +85,10 @@ RUNNER = {
     ].join(' | '));
 
     await this._waitForOverlayToClose();
+  },
+
+  atOnce(newAtOnce) {
+    this.AT_ONCE = newAtOnce;
   },
 
   _waitForOverlayToClose() {

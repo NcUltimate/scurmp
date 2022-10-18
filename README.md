@@ -8,7 +8,7 @@ Follow these steps closely:
 4. While in the SoundCloud tab, **Open a developer console** (see FAQ).
 5. You should now have 3 windows open:
     - Your browser of choice, with a logged-in **Spotify** tab and a logged-in **SoundCloud** tab
-    - A developer console or the **Spotify** tab
+    - A developer console for the **Spotify** tab
     - A developer console for the **SoundCloud** tab
 
 ## 2. Prepare SoundCloud Playlists
@@ -21,7 +21,7 @@ our Spotify tracks.
 1. **Manually search SoundCloud** for `Math.ceil(# songs in your playlist / 500)` tracks.
     - Example:
         Let's say I have 1406 liked songs, so I should search for `Math.ceil(1406/500)` = 3 tracks.
-2. **Create one new playlist per song you just searched**. The playlist must have "Tracklist" somewhere in its name.
+2. **Create one new playlist per song you just searched**. The playlist must have "Transfer" somewhere in its name.
     - Example:
         - I search for the song "The Business" by Tiësto, "Stay" by Zedd, and "Fangs" by Ghastly.
         - I create a new playlist from "The Business" named `Transfer 1`
@@ -51,6 +51,16 @@ our Spotify tracks.
 4. **Paste the copied output into the SoundCloud console**.
 
 ## 4. Begin converting on SoundCloud
+Note -this script has been heavily biased toward electronic music playlists. Common record labels and special character substitutions have been added to account for most cases that will be encountered when transferring known electronic tracks on SoundCloud.
+
+With that in mind, this script tries very hard to only add exact matches to the `Transfer` playlists. It knows how to do this by looking for these known labels as the upload users, or by looking for any of the track artists as the upload user.
+
+If you notice a large number of your tracks only getting a "closest" match, or "no_match", try manually searching for those songs to see if they were uploaded by a label. If the user who uploaded the track (e.g. `Label Username`) is a label that is not on the list, you can add it by typing `SOUNDCLOUD.addLabel('Label Username')`.
+
+Another note - EDM artists love to be quirky with their letter substitutions. `ƒ` is not the same as `f`, just as `å` is not `a`. Sometimes an artist like `Tiësto` is in the name of a track as `Tiesto`. Luckily this script normalizes all artist names by substituting "lookalike" characters to make comparison even more precise.
+
+If you come across an artist who has a special character that the script is not handling properly, you can also add your own custom character exceptions by typing `SOUNDCLOUD.addTranslation('å', 'a')`, where the first letter is the one to be translated, and the 2nd is the english letter.
+
 1. **Copy** [the contents](https://raw.githubusercontent.com/NcUltimate/scurmp/main/all.min.js) of `all.min.js` and paste it into the **SoundCloud** console.
 2. In the **SoundCloud** console, type `RUNNER.run()`. You should see some lines begin to print to the console in a tabular format.
     - Wait for this run to finish. Try to make sure your computer doesn't go to sleep. It takes about 3 mins to run per 50 songs.
@@ -63,5 +73,3 @@ our Spotify tracks.
     - If you are using **Chrome**, hold CMD+SHIFT then press J.
     - If you are using **Firefox**, hold CMD+SHIFT then press I.
     - If you are using another browser, kindly [download Google Chrome](https://www.google.com/chrome/thank-you.html?statcb=0&installdataindex=empty&defaultbrowser=0#).
-
-This script has been heavily biased toward electronic music playlists. Common record labels and special character substitutions have been added to account for most cases that will be encountered when transferring known electronic tracks on SoundCloud.
